@@ -13,32 +13,40 @@ if(isset($postData) && !empty($postData)) {
     if ((int)$request->id < 1) {
         return http_response_code(400);
     }
-
-    // Sanitize.
-    $status = $request->status;
     $id = $request->id;
-    $date = date('Y-m-d H:i:s');
-    if(isset($_COOKIE['cookie_name'])) {
-        $user = $_COOKIE['cookie_name'];
-    }
 
-    // Update request status
-    $sql = "UPDATE `invalid_ssn` SET `status`='$status',`changeDate`='$date',`lastUser`='$user' WHERE `id` = '{$id}' LIMIT 1";
+    if(isset($_GET["action"]) && !empty($_GET["action"])) {
+        if ('status' == $_GET["action"]) {
+            // Sanitize.
+            $status = $request->status;
+            $date = date('Y-m-d H:i:s');
+            if(isset($_COOKIE['cookie_name'])) {
+                $user = $_COOKIE['cookie_name'];
+            }
 
-    try {
-        $db = DB::getInstance();
-        $stm = $db->prepare($sql);
-        $stm->execute();
-        $column = [
-            'status' => 'succeed',
-        ];
-        echo json_encode($column);
-    } catch (Exception $e) {
-        error_log("[" . date("Y-m-d h:i:sa") . "]" . $e->getMessage(), 3, "error.log");
-        $column = [
-            'status' => 'failed',
-        ];
-        echo json_encode($column);
+            // Update request status
+            $sql = "UPDATE `invalid_ssn` SET `status`='$status',`changeDate`='$date',`lastUser`='$user' WHERE `id` = '{$id}' LIMIT 1";
+        } elseif ('note' == $_GET["action"]) {
+            $note = htmlspecialchars($request->note);
+            // Update request note
+            $sql = "UPDATE `invalid_ssn` SET `note`='$note' WHERE `id` = '{$id}' LIMIT 1";
+        }
+
+        try {
+            $db = DB::getInstance();
+            $stm = $db->prepare($sql);
+            $stm->execute();
+            $column = [
+                'status' => 'succeed',
+            ];
+            echo json_encode($column);
+        } catch (Exception $e) {
+            error_log("[" . date("Y-m-d h:i:sa") . "]" . $e->getMessage(), 3, "error.log");
+            $column = [
+                'status' => 'failed',
+            ];
+            echo json_encode($column);
+        }
     }
 }
 ?>
